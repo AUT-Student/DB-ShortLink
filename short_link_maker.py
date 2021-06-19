@@ -33,22 +33,25 @@ class ShortLinkMaker:
     def submit_url(self, url):
         exist_before = self._is_exist(f"url:{url}")
         if exist_before:
-            print("before link")
             return self._previous_link(url)
         else:
-            print("new link")
             return self._new_link(url)
 
     def reference_link(self, link):
+        exist_url = self._is_exist(f"link:{link}")
+        if exist_url:
 
-        data = self.redis.hgetall("link:" + link)
-        url = data["url"]
-        reference_counter = data["reference_counter"]
+            data = self.redis.hgetall("link:" + link)
+            url = data["url"]
+            reference_counter = data["reference_counter"]
 
-        self.redis.hset(f"link:{link}", "reference_counter", int(reference_counter)+1)
-        self.redis.hset(f"link:{link}", "last_reference", self._now_datetime_string())
+            self.redis.hset(f"link:{link}", "reference_counter", int(reference_counter)+1)
+            self.redis.hset(f"link:{link}", "last_reference", self._now_datetime_string())
 
-        print(data)
+            return url
+        else:
+            return "ERROR"
+
 
         # print(datetime.datetime.strptime(data["last_reference"], "%d-%m-%y %H:%M:%S"))
 
@@ -57,9 +60,9 @@ class ShortLinkMaker:
         """
         SOURCE: https://www.javatpoint.com/python-program-to-generate-a-random-string
 
-        :param letter_count:
-        :param digit_count:
-        :return:
+        :param letter_count: number of letter chars
+        :param digit_count: number of digit chars
+        :return: random string
         """
         str1 = ''.join((random.choice(string.ascii_letters) for x in range(letter_count)))
         str1 += ''.join((random.choice(string.digits) for x in range(digit_count)))
