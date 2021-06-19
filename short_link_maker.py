@@ -11,21 +11,31 @@ class ShortLinkMaker:
     def _create_database_connection(self):
         self.redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
+    @staticmethod
+    def _now_datetime_string():
+        return datetime.datetime.now().strftime("%d-%m-%y %H:%M:%S")
+
     def new_link(self, url):
         link = self.random_string()
         print(link)
 
         new_data = {"url": url, "reference_counter": 0,
-                    "last_reference": datetime.datetime.now().strftime("%d-%m-%y %H:%M:%S")}
+                    "last_reference": self._now_datetime_string()}
         self.redis.hmset(f"link:{link}", new_data)
-        self.redis.hset(f"url:{url}", link)
+        self.redis.set(f"url:{url}", link)
 
     def reference_link(self, link):
+
         data = self.redis.hgetall("link:" + link)
+        url = data["url"]
+        reference_counter = data["reference_counter"]
+
+        self.redis.hset(f"link:{link}", "reference_counter", int(reference_counter)+1)
+        self.redis.hset(f"link:{link}", "last_reference", self._now_datetime_string())
+
         print(data)
 
-        print(data["url"])
-        print(datetime.datetime.strptime(data["last_reference"], "%d-%m-%y %H:%M:%S"))
+        # print(datetime.datetime.strptime(data["last_reference"], "%d-%m-%y %H:%M:%S"))
 
     @staticmethod
     def random_string(letter_count=4, digit_count=2):

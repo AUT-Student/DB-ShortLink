@@ -4,6 +4,7 @@ shortLinkMaker = ShortLinkMaker()
 
 shortLinkMaker.new_link("www.a1.com")
 
-link = input()
 
-shortLinkMaker.reference_link(link)
+while True:
+    link = input()
+    shortLinkMaker.reference_link(link)
