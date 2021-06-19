@@ -3,6 +3,7 @@ import random
 import string
 import datetime
 import webbrowser
+import prettytable
 
 
 class ShortLinkMaker:
@@ -32,27 +33,54 @@ class ShortLinkMaker:
         return self.redis.exists(key) == 1
 
     def _increase_daily_submit(self):
-        date_string = datetime.datetime.now().strftime("%d-%m-%y")
+        date_string = datetime.datetime.now().strftime("%d%m%y")
         key = f"daily_submit:{date_string}"
 
         if self._is_exist(key):
-            self.redis.set(key, self.redis.get(key) + 1)
+            self.redis.set(key, int(self.redis.get(key)) + 1)
         else:
             self.redis.set(key, 1)
 
-    def _increase_daily_statistics_reference(self):
-        pass
+    def _increase_daily_reference(self):
+        date_string = datetime.datetime.now().strftime("%d%m%y")
+        key = f"daily_reference:{date_string}"
+
+        if self._is_exist(key):
+            self.redis.set(key, int(self.redis.get(key)) + 1)
+        else:
+            self.redis.set(key, 1)
 
     def reset(self):
         for key in self.redis.scan_iter("*"):
             self.redis.delete(key)
 
     def debug(self):
-        for key in self.redis.scan_iter("*"):
-            print(key)
-            print(self.redis.get(key))
+
+        print("\nDebug:")
+
+        table = prettytable.PrettyTable()
+        table.field_names = ["key", "value"]
+        for key in self.redis.scan_iter("link:*"):
+            table.add_row([key, self.redis.hgetall(key)])
+        print(table)
+
+        table = prettytable.PrettyTable()
+        table.field_names = ["key", "value"]
+        for key in self.redis.scan_iter("url:*"):
+            table.add_row([key, self.redis.get(key)])
+        print(table)
+
+        table = prettytable.PrettyTable()
+        table.field_names = ["key", "value"]
+        for key in self.redis.scan_iter("daily_reference:*"):
+            table.add_row([key, self.redis.get(key)])
+
+        for key in self.redis.scan_iter("daily_submit:*"):
+            table.add_row([key, self.redis.get(key)])
+        print(table)
 
     def submit_url(self, url):
+        self._increase_daily_submit()
         exist_before = self._is_exist(f"url:{url}")
         if exist_before:
             return self._previous_link(url)
@@ -60,6 +88,7 @@ class ShortLinkMaker:
             return self._new_link(url)
 
     def reference_link(self, link):
+        self._increase_daily_reference()
         exist_url = self._is_exist(f"link:{link}")
         if exist_url:
 
@@ -82,24 +111,29 @@ class ShortLinkMaker:
         link_list = []
         for key in self.redis.scan_iter("link:*"):
             value = self.redis.hgetall(key)
-            dictionary = {"key": key[4:], "url": value["url"],
+            dictionary = {"key": key[5:], "url": value["url"],
                           "reference_counter": int(value["reference_counter"]),
                           "last_reference": value["last_reference"]}
 
             link_list.append(dictionary)
 
-        print("All Links:")
-        for item in link_list:
-            print(item)
+        print("\nAll Links:")
+        table = prettytable.PrettyTable()
+        table.field_names = ["Row", "Key", "URL", "Reference Counter", "Last Reference"]
+        for i, item in enumerate(link_list):
+            table.add_row([i+1, item["key"], item["url"], item["reference_counter"], item["last_reference"]])
 
-        print()
+        print(table)
         sorted_link_list = sorted(link_list, key=lambda x: -x["reference_counter"])
 
-        print("More Frequent Link:")
-        print(sorted_link_list[0])
-        print(sorted_link_list[1])
-        print(sorted_link_list[2])
-        print()
+        print("\nMore Frequent Link:")
+        table = prettytable.PrettyTable()
+        table.field_names = ["Rank", "Key", "URL", "Reference Counter", "Last Reference"]
+        for rank, item in enumerate(sorted_link_list):
+            table.add_row([rank+1, item["key"], item["url"], item["reference_counter"], item["last_reference"]])
+            if rank == 2:
+                break
+        print(table)
 
     @staticmethod
     def open_url_on_browser(url):
