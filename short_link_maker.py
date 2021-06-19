@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 class ShortLinkMaker:
     def __init__(self):
         self._create_database_connection()
-        self.expiration_time = 30
+        self.expiration_time = 7 * 24 * 60 * 60
 
     def _create_database_connection(self):
         self.redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
@@ -107,33 +107,37 @@ class ShortLinkMaker:
         else:
             return "ERROR"
 
-
-        # print(datetime.datetime.strptime(data["last_reference"], "%d-%m-%y %H:%M:%S"))
-
     def dashboard(self):
         link_list = []
         for key in self.redis.scan_iter("link:*"):
             value = self.redis.hgetall(key)
+            item_datetime = datetime.datetime.strptime(value["last_reference"], "%d-%m-%y %H:%M:%S")
+            difference = datetime.datetime.now() - item_datetime
+            remaining = self.expiration_time - difference.total_seconds()
+
             dictionary = {"key": key[5:], "url": value["url"],
                           "reference_counter": int(value["reference_counter"]),
-                          "last_reference": value["last_reference"]}
+                          "last_reference": value["last_reference"], "remaining": remaining}
 
             link_list.append(dictionary)
 
         print("\nAll Links:")
         table = prettytable.PrettyTable()
-        table.field_names = ["Row", "Key", "URL", "Reference Counter", "Last Reference"]
+
+        table.field_names = ["Row", "Key", "URL", "Reference Counter", "Last Reference", "Remaining Expiration Time"]
         for i, item in enumerate(link_list):
-            table.add_row([i+1, item["key"], item["url"], item["reference_counter"], item["last_reference"]])
+            table.add_row([i+1, item["key"], item["url"], item["reference_counter"],
+                           item["last_reference"], item["remaining"]])
 
         print(table)
         sorted_link_list = sorted(link_list, key=lambda x: -x["reference_counter"])
 
         print("\nMore Frequent Link:")
         table = prettytable.PrettyTable()
-        table.field_names = ["Rank", "Key", "URL", "Reference Counter", "Last Reference"]
+        table.field_names = ["Rank", "Key", "URL", "Reference Counter", "Last Reference", "Remaining Expiration Time"]
         for rank, item in enumerate(sorted_link_list):
-            table.add_row([rank+1, item["key"], item["url"], item["reference_counter"], item["last_reference"]])
+            table.add_row([rank+1, item["key"], item["url"], item["reference_counter"],
+                           item["last_reference"], item["remaining"]])
             if rank == 2:
                 break
         print(table)
@@ -163,7 +167,6 @@ class ShortLinkMaker:
         plt.title("Daily Reference Statistic")
         plt.bar(days, counters)
         plt.show()
-
 
     @staticmethod
     def open_url_on_browser(url):
