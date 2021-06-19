@@ -5,19 +5,18 @@ shortLinkMaker = ShortLinkMaker()
 
 print(
     "Commands list:\n"
-    "* EXIT\n"
     "* SUBMIT\n"
     "* REF\n"
     "* DASHBOARD\n"
+    "* DEBUG\n"
+    "* RESET\n"
+    "* EXIT\n"
 )
 
 while True:
     command = input("Enter command:")
 
-    if command == "EXIT":
-        break
-
-    elif command == "SUBMIT":
+    if command == "SUBMIT":
         url = input("Enter url:")
         link = shortLinkMaker.submit_url(url)
         print(f"Link: {link}")
@@ -28,3 +27,12 @@ while True:
 
     elif command == "DASHBOARD":
         shortLinkMaker.dashboard()
+
+    elif command == "DEBUG":
+        shortLinkMaker.debug()
+
+    elif command == "RESET":
+        shortLinkMaker.reset()
+
+    elif command == "EXIT":
+        break

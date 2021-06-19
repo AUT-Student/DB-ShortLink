@@ -31,6 +31,27 @@ class ShortLinkMaker:
     def _is_exist(self, key):
         return self.redis.exists(key) == 1
 
+    def _increase_daily_submit(self):
+        date_string = datetime.datetime.now().strftime("%d-%m-%y")
+        key = f"daily_submit:{date_string}"
+
+        if self._is_exist(key):
+            self.redis.set(key, self.redis.get(key) + 1)
+        else:
+            self.redis.set(key, 1)
+
+    def _increase_daily_statistics_reference(self):
+        pass
+
+    def reset(self):
+        for key in self.redis.scan_iter("*"):
+            self.redis.delete(key)
+
+    def debug(self):
+        for key in self.redis.scan_iter("*"):
+            print(key)
+            print(self.redis.get(key))
+
     def submit_url(self, url):
         exist_before = self._is_exist(f"url:{url}")
         if exist_before:
@@ -61,19 +82,24 @@ class ShortLinkMaker:
         link_list = []
         for key in self.redis.scan_iter("link:*"):
             value = self.redis.hgetall(key)
-            dictionary = {"key": key, "url": value["url"],
+            dictionary = {"key": key[4:], "url": value["url"],
                           "reference_counter": int(value["reference_counter"]),
                           "last_reference": value["last_reference"]}
 
             link_list.append(dictionary)
 
+        print("All Links:")
+        for item in link_list:
+            print(item)
+
+        print()
         sorted_link_list = sorted(link_list, key=lambda x: -x["reference_counter"])
 
         print("More Frequent Link:")
         print(sorted_link_list[0])
         print(sorted_link_list[1])
         print(sorted_link_list[2])
-        print("\n")
+        print()
 
     @staticmethod
     def open_url_on_browser(url):
