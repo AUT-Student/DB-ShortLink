@@ -57,6 +57,24 @@ class ShortLinkMaker:
 
         # print(datetime.datetime.strptime(data["last_reference"], "%d-%m-%y %H:%M:%S"))
 
+    def dashboard(self):
+        link_list = []
+        for key in self.redis.scan_iter("link:*"):
+            value = self.redis.hgetall(key)
+            dictionary = {"key": key, "url": value["url"],
+                          "reference_counter": int(value["reference_counter"]),
+                          "last_reference": value["last_reference"]}
+
+            link_list.append(dictionary)
+
+        sorted_link_list = sorted(link_list, key=lambda x: -x["reference_counter"])
+
+        print("More Frequent Link:")
+        print(sorted_link_list[0])
+        print(sorted_link_list[1])
+        print(sorted_link_list[2])
+        print("\n")
+
     @staticmethod
     def open_url_on_browser(url):
         ie = webbrowser.get('c:\\program files\\internet explorer\\iexplore.exe')

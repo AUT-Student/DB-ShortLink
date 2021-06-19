@@ -8,6 +8,7 @@ print(
     "* EXIT\n"
     "* SUBMIT\n"
     "* REF\n"
+    "* DASHBOARD\n"
 )
 
 while True:
@@ -24,3 +25,6 @@ while True:
     elif command == "REF":
         link = input("Enter link:")
         print(shortLinkMaker.reference_link(link))
+
+    elif command == "DASHBOARD":
+        shortLinkMaker.dashboard()
