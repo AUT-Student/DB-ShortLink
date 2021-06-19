@@ -2,10 +2,22 @@ from short_link_maker import ShortLinkMaker
 
 shortLinkMaker = ShortLinkMaker()
 
-shortLinkMaker.submit_url("www.a1.com")
-shortLinkMaker.submit_url("www.a2.com")
+print(
+    "Commands list:\n"
+    "* EXIT\n"
+    "* SUBMIT\n"
+    "* REF\n"
+)
 
+while True:
+    command = input("Enter command:")
 
-# while True:
-#     link = input()
-#     shortLinkMaker.reference_link(link)
+    if command == "EXIT":
+        break
+    elif command == "SUBMIT":
+        url = input("Enter url:")
+        link = shortLinkMaker.submit_url(url)
+        print(f"Link: {link}")
+    elif command == "REF":
+        link = input("Enter link:")
+        shortLinkMaker.reference_link(link)
