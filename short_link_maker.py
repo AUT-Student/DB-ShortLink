@@ -5,12 +5,12 @@ import datetime
 import webbrowser
 import prettytable
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 class ShortLinkMaker:
     def __init__(self):
         self._create_database_connection()
+        self.expiration_time = 30
 
     def _create_database_connection(self):
         self.redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
@@ -24,7 +24,8 @@ class ShortLinkMaker:
         new_data = {"url": url, "reference_counter": 0,
                     "last_reference": self._now_datetime_string()}
         self.redis.hmset(f"link:{link}", new_data)
-        self.redis.set(f"url:{url}", link)
+        self.redis.expire(f"link:{link}", self.expiration_time)
+        self.redis.set(f"url:{url}", link, ex=self.expiration_time)
 
         return link
 
@@ -98,6 +99,9 @@ class ShortLinkMaker:
             self.redis.hset(f"link:{link}", "reference_counter", int(reference_counter)+1)
             self.redis.hset(f"link:{link}", "last_reference", self._now_datetime_string())
 
+            self.redis.expire(f"link:{link}", self.expiration_time)
+            self.redis.expire(f"url:{url}", self.expiration_time)
+
             self.open_url_on_browser(url)
             return url
         else:
@@ -133,27 +137,31 @@ class ShortLinkMaker:
             if rank == 2:
                 break
         print(table)
-
-        days = []
-        counter = []
+        data = []
         for key in self.redis.scan_iter("daily_submit:*"):
             value = int(self.redis.get(key))
-            days.append(key[13:])
-            counter.append(value)
+            data.append({"day": key[13:], "counter": value})
+
+        data = sorted(data, key=lambda x: x["day"])
+        days = []
+        counters = []
+        for item in data:
+            days.append(item["day"])
+            counters.append(item["counter"])
 
         plt.title("Daily Submit Statistic")
-        plt.bar(days, counter)
+        plt.bar(days, counters)
         plt.show()
 
         days = []
-        counter = []
+        counters = []
         for key in self.redis.scan_iter("daily_reference:*"):
             value = int(self.redis.get(key))
             days.append(key[16:])
-            counter.append(value)
+            counters.append(value)
 
         plt.title("Daily Reference Statistic")
-        plt.bar(days, counter)
+        plt.bar(days, counters)
         plt.show()
 
 
