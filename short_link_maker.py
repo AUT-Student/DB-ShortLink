@@ -5,6 +5,8 @@ import datetime
 import webbrowser
 import prettytable
 import matplotlib.pyplot as plt
+import re
+import validators
 
 
 class ShortLinkMaker:
@@ -80,6 +82,9 @@ class ShortLinkMaker:
         print(table)
 
     def submit_url(self, url):
+        if not validators.url(url):
+            return "ERROR"
+
         self._increase_daily_submit()
         exist_before = self._is_exist(f"url:{url}")
         if exist_before:
