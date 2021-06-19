@@ -1,5 +1,9 @@
 from short_link_maker import ShortLinkMaker
 
-print("Hello World")
+shortLinkMaker = ShortLinkMaker()
 
-print(ShortLinkMaker.random_string())
+shortLinkMaker.new_link("www.a1.com")
+
+link = input()
+
+shortLinkMaker.reference_link(link)

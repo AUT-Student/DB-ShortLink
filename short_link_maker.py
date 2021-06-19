@@ -1,22 +1,31 @@
 import redis
 import random
 import string
+import datetime
 
 
 class ShortLinkMaker:
     def __init__(self):
         self._create_database_connection()
-        # redis.set('foo', 'bar')
-        # print(redis.get('foo'))
 
     def _create_database_connection(self):
-        self.redis = redis.Redis(host='localhost', port=6379, db=0)
+        self.redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
     def new_link(self, url):
-        pass
+        link = self.random_string()
+        print(link)
+
+        new_data = {"url": url, "reference_counter": 0,
+                    "last_reference": datetime.datetime.now().strftime("%d-%m-%y %H:%M:%S")}
+        self.redis.hmset(f"link:{link}", new_data)
+        self.redis.hset(f"url:{url}", link)
 
     def reference_link(self, link):
-        pass
+        data = self.redis.hgetall("link:" + link)
+        print(data)
+
+        print(data["url"])
+        print(datetime.datetime.strptime(data["last_reference"], "%d-%m-%y %H:%M:%S"))
 
     @staticmethod
     def random_string(letter_count=4, digit_count=2):
