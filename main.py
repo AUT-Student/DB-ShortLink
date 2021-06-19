@@ -1,5 +1,6 @@
 from short_link_maker import ShortLinkMaker
 
+
 shortLinkMaker = ShortLinkMaker()
 
 print(

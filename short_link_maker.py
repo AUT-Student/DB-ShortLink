@@ -2,6 +2,7 @@ import redis
 import random
 import string
 import datetime
+import webbrowser
 
 
 class ShortLinkMaker:
@@ -48,12 +49,18 @@ class ShortLinkMaker:
             self.redis.hset(f"link:{link}", "reference_counter", int(reference_counter)+1)
             self.redis.hset(f"link:{link}", "last_reference", self._now_datetime_string())
 
+            self.open_url_on_browser(url)
             return url
         else:
             return "ERROR"
 
 
         # print(datetime.datetime.strptime(data["last_reference"], "%d-%m-%y %H:%M:%S"))
+
+    @staticmethod
+    def open_url_on_browser(url):
+        ie = webbrowser.get('c:\\program files\\internet explorer\\iexplore.exe')
+        ie.open(url)
 
     @staticmethod
     def random_string(letter_count=4, digit_count=2):
