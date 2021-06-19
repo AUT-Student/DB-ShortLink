@@ -4,6 +4,8 @@ import string
 import datetime
 import webbrowser
 import prettytable
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class ShortLinkMaker:
@@ -72,10 +74,7 @@ class ShortLinkMaker:
 
         table = prettytable.PrettyTable()
         table.field_names = ["key", "value"]
-        for key in self.redis.scan_iter("daily_reference:*"):
-            table.add_row([key, self.redis.get(key)])
-
-        for key in self.redis.scan_iter("daily_submit:*"):
+        for key in self.redis.scan_iter("daily*"):
             table.add_row([key, self.redis.get(key)])
         print(table)
 
@@ -134,6 +133,29 @@ class ShortLinkMaker:
             if rank == 2:
                 break
         print(table)
+
+        days = []
+        counter = []
+        for key in self.redis.scan_iter("daily_submit:*"):
+            value = int(self.redis.get(key))
+            days.append(key[13:])
+            counter.append(value)
+
+        plt.title("Daily Submit Statistic")
+        plt.bar(days, counter)
+        plt.show()
+
+        days = []
+        counter = []
+        for key in self.redis.scan_iter("daily_reference:*"):
+            value = int(self.redis.get(key))
+            days.append(key[16:])
+            counter.append(value)
+
+        plt.title("Daily Reference Statistic")
+        plt.bar(days, counter)
+        plt.show()
+
 
     @staticmethod
     def open_url_on_browser(url):
