@@ -15,14 +15,29 @@ class ShortLinkMaker:
     def _now_datetime_string():
         return datetime.datetime.now().strftime("%d-%m-%y %H:%M:%S")
 
-    def new_link(self, url):
+    def _new_link(self, url):
         link = self.random_string()
-        print(link)
-
         new_data = {"url": url, "reference_counter": 0,
                     "last_reference": self._now_datetime_string()}
         self.redis.hmset(f"link:{link}", new_data)
         self.redis.set(f"url:{url}", link)
+
+        return link
+
+    def _previous_link(self, url):
+        return self.redis.get(f"url:{url}")
+
+    def _is_exist(self, key):
+        return self.redis.exists(key) == 1
+
+    def submit_url(self, url):
+        exist_before = self._is_exist(f"url:{url}")
+        if exist_before:
+            print("before link")
+            return self._previous_link(url)
+        else:
+            print("new link")
+            return self._new_link(url)
 
     def reference_link(self, link):
 
