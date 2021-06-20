@@ -5,7 +5,6 @@ import datetime
 import webbrowser
 import prettytable
 import matplotlib.pyplot as plt
-import re
 import validators
 
 
@@ -38,7 +37,7 @@ class ShortLinkMaker:
         return self.redis.exists(key) == 1
 
     def _increase_daily_submit(self):
-        date_string = datetime.datetime.now().strftime("%d%m%y")
+        date_string = datetime.datetime.now().strftime("%y%m%d")
         key = f"daily_submit:{date_string}"
 
         if self._is_exist(key):
@@ -47,7 +46,7 @@ class ShortLinkMaker:
             self.redis.set(key, 1)
 
     def _increase_daily_reference(self):
-        date_string = datetime.datetime.now().strftime("%d%m%y")
+        date_string = datetime.datetime.now().strftime("%y%m%d")
         key = f"daily_reference:{date_string}"
 
         if self._is_exist(key):
@@ -162,12 +161,18 @@ class ShortLinkMaker:
         plt.bar(days, counters)
         plt.show()
 
-        days = []
-        counters = []
+        data = []
         for key in self.redis.scan_iter("daily_reference:*"):
             value = int(self.redis.get(key))
-            days.append(key[16:])
-            counters.append(value)
+            data.append({"day": key[13:], "counter": value})
+
+        data = sorted(data, key=lambda x: x["day"])
+        days = []
+        counters = []
+        for item in data:
+            days.append(item["day"])
+            counters.append(item["counter"])
+
 
         plt.title("Daily Reference Statistic")
         plt.bar(days, counters)
